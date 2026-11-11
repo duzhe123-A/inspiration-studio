@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f7f4">
+  <meta name="description" content="输入任意关键词，换个角度找灵感，沿着喜欢的想法继续发散。">
+  <title>灵感发散器</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./ideas.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="top-inner">
+      <a class="brand" href="./index.html"><span class="brand-icon" aria-hidden="true">✦</span>灵感发散器</a>
+      <button class="quiet-button" type="button" id="open-saved"><span aria-hidden="true">☆</span> 已收藏 <span id="saved-count" class="count" hidden></span></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="hero" aria-labelledby="title">
+      <div class="hero-content">
+        <h1 id="title">从一个词，<br>打开<span>更多可能</span><span class="full-stop">。</span></h1>
+        <p class="hero-description">输入任意关键词，从不同角度找灵感。</p>
+        <form id="idea-form" class="search">
+          <label class="sr-only" for="keyword">输入关键词</label>
+          <input id="keyword" name="keyword" placeholder="试试「咖啡」「太空旅行」……" maxlength="100" required autocomplete="off" enterkeyhint="go">
+          <button class="primary" type="submit">开始发散 <span aria-hidden="true">↗</span></button>
+        </form>
+        <div class="examples" id="examples">
+          <span>试试</span>
+          <button type="button" data-keyword="咖啡">咖啡</button>
+          <button type="button" data-keyword="奶茶">奶茶</button>
+          <button type="button" data-keyword="城市漫游">城市漫游</button>
+          <button type="button" data-keyword="太空旅行">太空旅行</button>
+        </div>
+      </div>
+
+      <div class="motif" aria-hidden="true">
+        <div class="orbit orbit-outer"></div>
+        <div class="orbit orbit-inner"></div>
+        <div class="orbit-axis"></div>
+        <span class="motif-center">✦</span>
+        <span class="motif-star">✧</span>
+        <span class="motif-tag motif-sense"><b>◉</b> 感官</span>
+        <span class="motif-tag motif-scene"><b>◌</b> 场景</span>
+        <span class="motif-tag motif-mix"><b>✦</b> 跨界</span>
+        <span class="motif-dot dot-a"></span>
+        <span class="motif-dot dot-b"></span>
+        <span class="motif-dot dot-c"></span>
+        <span class="motif-dot dot-d"></span>
+      </div>
+    </section>
+
+    <section class="results" id="results" aria-labelledby="result-title">
+      <nav id="trail" class="trail" aria-label="发散路径" hidden></nav>
+      <div class="results-heading">
+        <div>
+          <p class="result-context" id="result-context"></p>
+          <h2 id="result-title" tabindex="-1"></h2>
+        </div>
+        <button type="button" id="more" class="more"><span aria-hidden="true">⟳</span> 换一批</button>
+      </div>
+      <div class="cards" id="cards"></div>
+      <p id="notice" class="sr-only" role="status"></p>
+    </section>
+  </main>
+
+  <dialog id="saved-dialog" aria-labelledby="saved-title">
+    <div class="dialog-heading">
+      <h2 id="saved-title">已收藏的灵感</h2>
+      <form method="dialog"><button type="submit" class="close" aria-label="关闭收藏">×</button></form>
+    </div>
+    <div id="saved-list" class="saved-list"></div>
+  </dialog>
+
+  <template id="card-template">
+    <article class="card">
+      <div class="card-top">
+        <div class="category"><span class="category-icon" aria-hidden="true"></span><span class="category-name"></span></div>
+        <button class="save" type="button" aria-pressed="false"></button>
+      </div>
+      <h3 class="card-title"></h3>
+      <p class="card-detail"></p>
+      <button class="explore" type="button">继续发散 <span aria-hidden="true">↗</span></button>
+    </article>
+  </template>
+</body>
+</html>
