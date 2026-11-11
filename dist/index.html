@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f7f4">
-  <meta name="description" content="输入任意关键词，换个角度找灵感，沿着喜欢的想法继续发散。">
+  <meta name="description" content="输入任意关键词，在动态分支图上找灵感，沿着喜欢的想法继续发散。">
   <title>灵感发散器</title>
   <link rel="stylesheet" href="./style.css">
   <script defer src="./ideas.js"></script>
@@ -20,12 +20,11 @@
 
   <main class="layout">
     <section class="hero" aria-labelledby="title">
-      <div class="hero-content">
-        <h1 id="title">从一个词，<br>打开<span>更多可能</span><span class="full-stop">。</span></h1>
-        <p class="hero-description">输入任意关键词，从不同角度找灵感。</p>
+      <h1 id="title">从一个词，<br>打开<span>更多可能。</span></h1>
+      <div>
         <form id="idea-form" class="search">
-          <label class="sr-only" for="keyword">输入关键词</label>
-          <input id="keyword" name="keyword" placeholder="试试「咖啡」「太空旅行」……" maxlength="100" required autocomplete="off" enterkeyhint="go">
+          <label class="sr-only" for="keyword">输入关键词或短语</label>
+          <input id="keyword" name="keyword" placeholder="输入任意关键词或短语" maxlength="100" required autocomplete="off" enterkeyhint="go">
           <button class="primary" type="submit">开始发散 <span aria-hidden="true">↗</span></button>
         </form>
         <div class="examples" id="examples">
@@ -36,33 +35,39 @@
           <button type="button" data-keyword="太空旅行">太空旅行</button>
         </div>
       </div>
-
-      <div class="motif" aria-hidden="true">
-        <div class="orbit orbit-outer"></div>
-        <div class="orbit orbit-inner"></div>
-        <div class="orbit-axis"></div>
-        <span class="motif-center">✦</span>
-        <span class="motif-star">✧</span>
-        <span class="motif-tag motif-sense"><b>◉</b> 感官</span>
-        <span class="motif-tag motif-scene"><b>◌</b> 场景</span>
-        <span class="motif-tag motif-mix"><b>✦</b> 跨界</span>
-        <span class="motif-dot dot-a"></span>
-        <span class="motif-dot dot-b"></span>
-        <span class="motif-dot dot-c"></span>
-        <span class="motif-dot dot-d"></span>
-      </div>
     </section>
 
-    <section class="results" id="results" aria-labelledby="result-title">
-      <nav id="trail" class="trail" aria-label="发散路径" hidden></nav>
-      <div class="results-heading">
-        <div>
-          <p class="result-context" id="result-context"></p>
-          <h2 id="result-title" tabindex="-1"></h2>
-        </div>
-        <button type="button" id="more" class="more"><span aria-hidden="true">⟳</span> 换一批</button>
+    <section class="workspace" id="results" aria-label="灵感分支图">
+      <div class="workspace-toolbar">
+        <nav id="trail" class="trail" aria-label="发散路径" hidden></nav>
+        <p id="graph-hint" class="graph-hint">点选分支，查看并继续发散</p>
+        <button type="button" id="more" class="quiet-button more"><span aria-hidden="true">⟳</span> 换一批</button>
       </div>
-      <div class="cards" id="cards"></div>
+
+      <div id="plot" class="plot" role="group" aria-labelledby="result-title">
+        <div id="connections" class="connections" aria-hidden="true"></div>
+        <div class="center">
+          <div class="center-copy">
+            <span class="center-mark" aria-hidden="true">✦</span>
+            <h2 id="result-title" tabindex="-1"></h2>
+          </div>
+        </div>
+        <div id="branches" class="branches"></div>
+      </div>
+
+      <section class="idea-detail" id="idea-detail" aria-labelledby="detail-title">
+        <div class="detail-copy">
+          <div class="detail-heading">
+            <span class="detail-category" id="detail-category"></span>
+            <h3 id="detail-title"></h3>
+          </div>
+          <p id="detail-text"></p>
+        </div>
+        <div class="detail-actions">
+          <button class="save" id="save-detail" type="button" aria-pressed="false"></button>
+          <button class="primary explore" id="explore-detail" type="button">继续发散 <span aria-hidden="true">↗</span></button>
+        </div>
+      </section>
       <p id="notice" class="sr-only" role="status"></p>
     </section>
   </main>
@@ -72,19 +77,30 @@
       <h2 id="saved-title">已收藏的灵感</h2>
       <form method="dialog"><button type="submit" class="close" aria-label="关闭收藏">×</button></form>
     </div>
-    <div id="saved-list" class="saved-list"></div>
+    <p id="saved-empty" class="saved-empty" hidden>点选分支后，点击详情旁的星星即可收藏。</p>
+    <ul id="saved-list" class="saved-list"></ul>
   </dialog>
 
-  <template id="card-template">
-    <article class="card">
-      <div class="card-top">
-        <div class="category"><span class="category-icon" aria-hidden="true"></span><span class="category-name"></span></div>
-        <button class="save" type="button" aria-pressed="false"></button>
+  <template id="branch-template">
+    <button class="branch" type="button" aria-pressed="false" aria-controls="idea-detail">
+      <span class="branch-marker" aria-hidden="true"></span>
+      <span class="branch-label">
+        <span class="branch-category"></span>
+        <span class="branch-title"></span>
+      </span>
+    </button>
+  </template>
+
+  <template id="saved-template">
+    <li class="saved-item">
+      <div class="saved-heading">
+        <h3 class="saved-name"></h3>
+        <button class="save" type="button" aria-pressed="true"></button>
       </div>
-      <h3 class="card-title"></h3>
-      <p class="card-detail"></p>
-      <button class="explore" type="button">继续发散 <span aria-hidden="true">↗</span></button>
-    </article>
+      <p class="saved-topic"></p>
+      <p class="saved-description"></p>
+      <button class="saved-explore" type="button">继续发散 <span aria-hidden="true">↗</span></button>
+    </li>
   </template>
 </body>
 </html>
