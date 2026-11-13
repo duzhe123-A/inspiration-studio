@@ -115,9 +115,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .composer-submit { background: #27251d; color: #fff; }
 .composer-submit:hover { background: #4a442f; }
 .keyword-suggestions { display: flex; align-items: center; justify-content: center; gap: 6px; height: var(--suggestions-height); padding-top: 6px; white-space: nowrap; }
-.keyword-suggestions span { color: var(--muted); font-size: 11px; }
 .keyword-suggestions button { min-height: 28px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 14px; background: #fff; font-size: 12px; }
 .keyword-suggestions button:hover { border-color: #e5c84d; background: #fff5cd; }
+#shuffle-suggestions { border-color: #e8d48b; background: #fff5cd; font-weight: 700; }
+#shuffle-suggestions:hover { background: #ffea9b; }
 
 dialog { width: min(calc(100% - 24px), 540px); max-height: min(86dvh, 720px); padding: 20px; border: 1px solid var(--line); border-radius: 19px; color: inherit; background: #fff; box-shadow: 0 16px 80px #28231338; }
 dialog::backdrop { background: #2823134f; }
@@ -197,9 +198,9 @@ dialog::backdrop { background: #2823134f; }
   #fit-view span { display: none; }
   .toast { bottom: calc(121px + var(--suggestions-height) + env(safe-area-inset-bottom)); }
 }
-@media (max-width: 360px) {
-  .keyword-suggestions { gap: 5px; }
-  .keyword-suggestions button { padding-inline: 7px; font-size: 11px; }
+@media (max-width: 400px) {
+  .keyword-suggestions { gap: 4px; }
+  .keyword-suggestions button { padding-inline: 5px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

@@ -286,11 +286,27 @@ attach.addEventListener("click", () => {
   input.focus();
 });
 
-element("keyword-suggestions").addEventListener("click", event => {
-  const button = event.target.closest("button");
+const suggestions = element("keyword-suggestions");
+const suggestionButtons = [...suggestions.querySelectorAll("[data-suggestion]")];
+
+suggestions.addEventListener("click", event => {
+  const button = event.target.closest("[data-suggestion]");
   if (!button) return;
   input.value = button.textContent;
   input.focus({ preventScroll: true });
+});
+
+element("shuffle-suggestions").addEventListener("click", () => {
+  const previousWords = new Set(suggestionButtons.map(button => button.textContent));
+  const availableThemes = keywordThemes.map(theme => theme.filter(word => !previousWords.has(word)));
+  const nextWords = suggestionButtons.map(button => {
+    const themeIndex = Math.floor(Math.random() * availableThemes.length);
+    const [theme] = availableThemes.splice(themeIndex, 1);
+    const word = theme[Math.floor(Math.random() * theme.length)];
+    button.textContent = word;
+    return word;
+  });
+  announce(`灵感提示词已更新：${nextWords.join("、")}`);
 });
 
 element("idea-form").addEventListener("submit", event => {
