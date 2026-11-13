@@ -223,11 +223,17 @@ function showActive(node) {
   const previous = active;
   active = node;
   if (previous) updateNode(previous);
-  updateNode(node);
+  if (node) updateNode(node);
+  element("empty-graph").hidden = Boolean(node);
+  element("more").hidden = !node;
+  element("canvas-tip").hidden = !node;
+  element("zoom-controls").hidden = !node;
+  element("open-plan").disabled = !node;
+  attach.disabled = !node;
   const pick = element("pick-active");
-  pick.hidden = !node.idea;
-  element("open-detail").hidden = !node.idea;
-  const isPicked = picked.has(node.key);
+  pick.hidden = !node?.idea;
+  element("open-detail").hidden = !node?.idea;
+  const isPicked = node ? picked.has(node.key) : false;
   pick.setAttribute("aria-pressed", String(isPicked));
   element("pick-label").textContent = isPicked ? "✓ 已加入方案" : "＋ 加入方案";
   updateComposer();
@@ -240,11 +246,17 @@ function focusNode(node) {
   announce(`「${node.label}」有 ${node.children.length} 条分支`);
 }
 
-function start(topic, animate = true) {
+function clearGraph() {
+  stopCamera();
   nodes.clear();
   branches.replaceChildren();
   connections.replaceChildren();
   active = undefined;
+  root = undefined;
+}
+
+function start(topic, animate = true) {
+  clearGraph();
   root = addNode(null, { topic, label: topic }, { x: 0, y: 0 });
   markExpanded(root, animate);
   showActive(root);
@@ -253,8 +265,12 @@ function start(topic, animate = true) {
 }
 
 function updateComposer() {
-  const linked = attach.getAttribute("aria-pressed") === "true";
-  input.placeholder = linked ? `连接到「${titleText(active.label, 16)}」…` : "输入任意关键词，开始发散…";
+  const linked = active && attach.getAttribute("aria-pressed") === "true";
+  if (linked) {
+    input.placeholder = `连接到「${titleText(active.label, 16)}」…`;
+  } else {
+    input.placeholder = active ? "输入任意关键词，开始发散…" : "例如：城市漫游";
+  }
   const submit = element("idea-form").querySelector('[type="submit"]');
   submit.setAttribute("aria-label", linked ? "添加并发散" : "开始发散");
   submit.title = submit.getAttribute("aria-label");
@@ -302,6 +318,7 @@ for (const [id, ratio] of [["zoom-in", 1.25], ["zoom-out", .8]]) {
 }
 plot.addEventListener("wheel", event => {
   event.preventDefault();
+  if (!root) return;
   stopCamera();
   const factor = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? plot.clientHeight : 1;
   zoomAt(event.clientX, event.clientY, camera.scale * Math.exp(clamp(-event.deltaY * factor * .002, -.55, .55)));
@@ -314,7 +331,7 @@ function pointerMetrics() {
 }
 
 plot.addEventListener("pointerdown", event => {
-  if (event.button !== 0 || pointers.size >= 2) return;
+  if (!root || event.button !== 0 || pointers.size >= 2) return;
   stopCamera();
   pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
   gesture = { ...pointerMetrics(), moving: pointers.size === 2 || Boolean(gesture?.moving) };
@@ -442,7 +459,7 @@ element("copy-idea").addEventListener("click", async () => {
 });
 
 function restoreRoute({ idea, route }) {
-  if (root.label !== route[0].label) start(route[0].topic, false);
+  if (root?.label !== route[0].label) start(route[0].topic, false);
   let node = root;
   for (const step of [...route.slice(1), { topic: idea.title, label: idea.title, idea }]) {
     markExpanded(node, false);
@@ -515,6 +532,19 @@ const planner = setupIdeaPlanner({
 
 element("pick-active").addEventListener("click", () => {
   if (active.idea) planner.toggle(asEntry(active));
+});
+
+element("restart").addEventListener("click", () => {
+  clearGraph();
+  planner.clearSelection();
+  attach.setAttribute("aria-pressed", "false");
+  input.value = "";
+  const { x, y } = viewArea();
+  autoFit = true;
+  moveCamera({ x, y, scale: 1 }, false);
+  showActive(undefined);
+  input.focus({ preventScroll: true });
+  announce("画布已清空，可以输入新关键词");
 });
 
 updateSavedCount();

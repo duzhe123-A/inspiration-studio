@@ -21,12 +21,17 @@
       </div>
     </div>
 
+    <p id="empty-graph" class="empty-graph" hidden>输入关键词，开始一张新的灵感图。</p>
+
     <header class="topbar">
       <a class="brand" href="./" aria-label="灵感发散器首页">
         <span class="brand-icon" aria-hidden="true">✳</span>
         <span>灵感发散器 <small>INSPIRATION STUDIO</small></span>
       </a>
-      <button class="quiet-button saved-button" type="button" id="open-saved"><span aria-hidden="true">☆</span> 已收藏 <span id="saved-count" class="count" hidden></span></button>
+      <div class="topbar-actions">
+        <button class="quiet-button saved-button" type="button" id="restart">重新开始</button>
+        <button class="quiet-button saved-button" type="button" id="open-saved"><span aria-hidden="true">☆</span> 已收藏 <span id="saved-count" class="count" hidden></span></button>
+      </div>
     </header>
 
     <aside class="tray" aria-label="待整合灵感">
@@ -42,9 +47,9 @@
       <button type="button" id="open-detail" class="graph-tool" hidden>详情 <span aria-hidden="true">↗</span></button>
     </div>
 
-    <div class="canvas-tip" aria-hidden="true"><span class="tip-dot"></span> 点击节点继续发散 <span>·</span> 拖动画布探索</div>
+    <div id="canvas-tip" class="canvas-tip" aria-hidden="true"><span class="tip-dot"></span> 点击节点继续发散 <span>·</span> 拖动画布探索</div>
 
-    <div class="zoom-controls" role="group" aria-label="画布缩放">
+    <div id="zoom-controls" class="zoom-controls" role="group" aria-label="画布缩放">
       <button type="button" id="zoom-out" aria-label="缩小">−</button>
       <span id="zoom-level" aria-hidden="true">100%</span>
       <button type="button" id="zoom-in" aria-label="放大">+</button>

@@ -293,6 +293,12 @@ function setupIdeaPlanner({ getCandidates, copy, onSelectionChange, onLimit }) {
   });
 
   return {
+    clearSelection() {
+      chosen.clear();
+      currentPlan = undefined;
+      updateCount();
+      onSelectionChange(chosen);
+    },
     toggle(entry) {
       const key = keyFor(entry);
       setChosen(key, entry, !chosen.has(key));
