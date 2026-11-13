@@ -16,3 +16,9 @@
 ## 部署 AI 整合
 
 运行 `node scripts/build-site.mjs` 生成 Sites Worker。在 Sites 的运行环境配置密钥 `OPENAI_API_KEY`，并应用 `drizzle/` 下的 D1 迁移。公开站点无需登录，每日 AI 请求上限默认 50 次，可通过 `AI_PLAN_DAILY_LIMIT` 调整。
+
+## 演示文稿
+
+[下载新版网站演示 PPT（.pptx）](./inspiration-studio-demo.pptx?raw=true)
+
+以「城市漫游」为例，演示如何展开灵感、整合点子并生成方案。全套 7 页，含演讲者备注，预计讲 4 分半。
