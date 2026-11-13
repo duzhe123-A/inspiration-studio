@@ -285,16 +285,8 @@ async function copyIdea() {
   const labels = [...route.map(({ label }) => label), idea.title];
   const text = [idea.title, idea.detail, `发散路径：${labels.join(" → ")}`].join("\n\n");
 
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    if (idea !== activeIdea || route !== path) return;
-    copyText.value = text;
-    if (!copyDialog.open) copyDialog.showModal();
-    copyText.focus();
-    copyText.select();
-    return;
-  }
+  const copied = await copyToClipboard(text, "复制灵感", () => idea === activeIdea && route === path);
+  if (!copied) return;
 
   notice.textContent = `已复制「${idea.title}」`;
   if (idea !== activeIdea || route !== path) return;
@@ -303,6 +295,21 @@ async function copyIdea() {
   copyFeedback = setTimeout(() => {
     copyButton.textContent = "复制灵感";
   }, 1800);
+}
+
+async function copyToClipboard(text, heading, isCurrent) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    if (!isCurrent()) return false;
+    element("copy-title").textContent = heading;
+    copyText.value = text;
+    if (!copyDialog.open) copyDialog.showModal();
+    copyText.focus();
+    copyText.select();
+    return false;
+  }
 }
 
 function positionConnections() {
@@ -436,6 +443,22 @@ element("open-saved").addEventListener("click", () => {
   cancelPromotion?.();
   renderSaved();
   dialog.showModal();
+});
+
+setupIdeaPlanner({
+  getCandidates() {
+    const visible = graph.map(({ idea }) => ({ idea, route: path }));
+    const opened = [];
+    for (const route of explored.values()) {
+      const idea = route.at(-1).idea;
+      if (idea && route[0].topic === path[0].topic) opened.push({ idea, route: route.slice(0, -1) });
+    }
+    return [...visible, ...opened];
+  },
+  beforeOpen() {
+    cancelPromotion?.();
+  },
+  copy: copyToClipboard,
 });
 
 new ResizeObserver(positionConnections).observe(plot);

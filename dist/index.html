@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="./style.css">
   <script defer src="./ideas.js"></script>
   <script defer src="./followups.js"></script>
+  <script defer src="./plan.js"></script>
   <script defer src="./app.js"></script>
 </head>
 <body>
@@ -47,6 +48,7 @@
           <p id="graph-hint" class="graph-hint">点选分支查看灵感</p>
           <div class="graph-actions">
             <button type="button" id="open-map" class="quiet-button">全图</button>
+            <button type="button" id="open-plan" class="quiet-button plan-entry">整合方案 <span id="plan-badge" class="count" hidden></span></button>
             <button type="button" id="more" class="quiet-button more"><span aria-hidden="true">⟳</span> 换一批</button>
           </div>
         </div>
@@ -98,6 +100,46 @@
     </div>
     <div class="map-scroll">
       <ul id="map-tree" class="map-tree" aria-label="已展开的灵感路径"></ul>
+    </div>
+  </dialog>
+
+  <dialog id="plan-dialog" class="plan-dialog" aria-labelledby="plan-title">
+    <div class="dialog-heading">
+      <h2 id="plan-title">整合创意方案</h2>
+      <form method="dialog"><button type="submit" class="close" aria-label="关闭创意方案">×</button></form>
+    </div>
+    <div id="plan-picker">
+      <p class="plan-hint">至少选择两条灵感。切换分支后可以接着选。</p>
+      <fieldset class="plan-choices">
+        <legend class="sr-only">选择要整合的灵感</legend>
+        <div id="plan-options"></div>
+      </fieldset>
+      <div class="plan-actions">
+        <span id="plan-count" role="status"></span>
+        <button id="generate-plan" class="primary" type="button" disabled>生成方案</button>
+      </div>
+    </div>
+    <div id="plan-result" hidden>
+      <article id="plan-content" class="plan-content" tabindex="-1">
+        <h3 id="plan-name"></h3>
+        <section>
+          <h4>核心想法</h4>
+          <p id="plan-concept"></p>
+        </section>
+        <section>
+          <h4>具体执行步骤</h4>
+          <ol id="plan-steps"></ol>
+        </section>
+        <section>
+          <h4>最终成果</h4>
+          <p id="plan-deliverable"></p>
+        </section>
+      </article>
+      <div class="plan-actions">
+        <button id="edit-plan" class="quiet-button" type="button">调整选择</button>
+        <button id="copy-plan" class="primary" type="button">复制方案</button>
+        <span id="plan-status" class="sr-only" role="status"></span>
+      </div>
     </div>
   </dialog>
 
