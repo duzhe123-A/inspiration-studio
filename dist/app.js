@@ -5,7 +5,13 @@ const branchTemplate = element("branch-template");
 const savedTemplate = element("saved-template");
 const form = element("idea-form");
 const input = element("keyword");
+const keywordPanel = element("keyword-panel");
+const exampleTopics = element("examples");
+const more = element("more");
+const workspace = element("results");
+const workspaceToolbar = element("workspace-toolbar");
 const title = element("result-title");
+const center = title.closest(".center");
 const trail = element("trail");
 const hint = element("graph-hint");
 const plot = element("plot");
@@ -15,7 +21,10 @@ const detail = element("idea-detail");
 const detailTitle = element("detail-title");
 const detailCategory = element("detail-category");
 const detailText = element("detail-text");
+const detailToggle = element("detail-toggle");
+const detailToggleLabel = element("detail-toggle-label");
 const detailSave = element("save-detail");
+const exploreButton = element("explore-detail");
 const notice = element("notice");
 const dialog = element("saved-dialog");
 const savedList = element("saved-list");
@@ -26,6 +35,9 @@ const storageKey = "inspiration-studio-saved-v1";
 let path = [{ topic: "咖啡", label: "咖啡", batch: 0 }];
 let activeIdea;
 let graph = [];
+let cancelPromotion;
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const mobileLayout = matchMedia("(max-width: 600px)");
 const saved = readSaved();
 
 function readSaved() {
@@ -70,9 +82,94 @@ function toggleSaved(key, idea, route) {
   updateSaveButton(detailSave, ideaKey(activeIdea, path), activeIdea.title);
 }
 
-function explore(idea, route) {
-  path = [...route, { topic: idea.title, label: idea.title, batch: 0 }];
-  render(true);
+function enterExploration() {
+  if (keywordPanel.classList.contains("is-compact")) return;
+  keywordPanel.classList.add("is-compact");
+  element("title").classList.add("sr-only");
+  exampleTopics.hidden = true;
+  element("search-controls").append(more);
+}
+
+function setDetailExpanded(expanded) {
+  detail.classList.toggle("is-expanded", expanded);
+  detailToggle.setAttribute("aria-expanded", String(expanded));
+  detailToggleLabel.textContent = expanded ? "收起详情" : "展开详情";
+}
+
+function keepGraphAboveDetail() {
+  if (!mobileLayout.matches) return;
+  const overlap = plot.getBoundingClientRect().bottom - detail.getBoundingClientRect().top;
+  if (overlap > 0) window.scrollBy(0, Math.ceil(overlap + 8));
+}
+
+function explore(idea, route, source) {
+  const nextPath = [...route, { topic: idea.title, label: idea.title, batch: 0 }];
+  const showNextLayer = () => {
+    enterExploration();
+    path = nextPath;
+    render(true, true);
+  };
+  if (source && !reducedMotion.matches && typeof source.node.animate === "function") {
+    promoteBranch(source, idea, showNextLayer);
+  } else {
+    showNextLayer();
+  }
+}
+
+function promoteBranch({ node, connection }, idea, showNextLayer) {
+  if (cancelPromotion) return;
+
+  const marker = node.querySelector(".branch-marker");
+  const from = marker.getBoundingClientRect();
+  const to = center.getBoundingClientRect();
+  const x = from.left + from.width / 2 - to.left - to.width / 2;
+  const y = from.top + from.height / 2 - to.top - to.height / 2;
+  const scale = from.width / to.width;
+  const ghost = center.cloneNode(true);
+  const ghostTitle = ghost.querySelector("h2");
+  ghostTitle.removeAttribute("id");
+  ghostTitle.removeAttribute("tabindex");
+  ghostTitle.removeAttribute("title");
+  ghostTitle.textContent = idea.title;
+  ghost.setAttribute("aria-hidden", "true");
+  ghost.classList.add("traveling-center");
+  ghost.dataset.tone = idea.id;
+
+  const travelingMarker = document.createElement("span");
+  travelingMarker.className = "traveling-marker";
+  travelingMarker.textContent = idea.icon;
+  ghost.append(travelingMarker);
+  plot.append(ghost);
+  plot.classList.add("is-promoting");
+  exploreButton.setAttribute("aria-disabled", "true");
+
+  // The incoming branches take up the remaining 202 ms, including their stagger.
+  const duration = 198;
+  const movement = ghost.animate([
+    { transform: `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})` },
+    { transform: "translate(-50%, -50%) scale(1)" },
+  ], { duration, easing: "cubic-bezier(.3,.05,.2,1)", fill: "both" });
+  const animations = [
+    movement,
+    travelingMarker.animate([
+      { opacity: 1 }, { opacity: 1, offset: 0.18 }, { opacity: 0, offset: 0.78 }, { opacity: 0 },
+    ], { duration, fill: "both" }),
+    connection.animate([
+      { opacity: 1 }, { opacity: 1, offset: 0.58 }, { opacity: 0 },
+    ], { duration, fill: "both" }),
+    ...[center, branches, ...graph.map((branch) => branch.connection).filter((line) => line !== connection)]
+      .map((layer) => layer.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration, easing: "ease-out", fill: "both",
+      })),
+  ];
+  cancelPromotion = () => {
+    for (const animation of animations) animation.cancel();
+    ghost.remove();
+    plot.classList.remove("is-promoting");
+    exploreButton.removeAttribute("aria-disabled");
+    cancelPromotion = undefined;
+  };
+  movement.finished.then(showNextLayer, () => {});
 }
 
 function renderSaved() {
@@ -116,7 +213,12 @@ function selectIdea(idea, announce = true) {
   detailCategory.textContent = idea.label;
   detailText.textContent = idea.detail;
   updateSaveButton(detailSave, ideaKey(idea, path), idea.title);
-  if (announce) notice.textContent = `已选中「${idea.title}」。${idea.detail}`;
+  if (announce) {
+    workspace.classList.add("has-active-detail");
+    setDetailExpanded(false);
+    keepGraphAboveDetail();
+    notice.textContent = `已选中「${idea.title}」。${idea.detail}`;
+  }
 }
 
 function positionConnections() {
@@ -134,7 +236,8 @@ function positionConnections() {
 
 function renderTrail() {
   trail.hidden = path.length === 1;
-  hint.hidden = !trail.hidden;
+  hint.hidden = !trail.hidden || keywordPanel.classList.contains("is-compact");
+  workspaceToolbar.hidden = trail.hidden && hint.hidden;
   trail.replaceChildren();
   for (const [index, step] of path.slice(0, -1).entries()) {
     const button = document.createElement("button");
@@ -150,9 +253,19 @@ function renderTrail() {
     arrow.textContent = "›";
     trail.append(button, arrow);
   }
+  if (!trail.hidden) {
+    const current = document.createElement("span");
+    current.className = "trail-current";
+    current.setAttribute("aria-current", "location");
+    current.textContent = path.at(-1).label;
+    trail.append(current);
+    trail.scrollLeft = trail.scrollWidth;
+  }
 }
 
-function render(focusTitle = false) {
+function render(focusTitle = false, enteringBranch = false) {
+  cancelPromotion?.();
+  plot.classList.toggle("is-expanding", enteringBranch);
   const current = path.at(-1);
   title.textContent = current.label;
   title.title = current.label;
@@ -165,13 +278,15 @@ function render(focusTitle = false) {
     connection.className = "connection";
     for (const item of [node, connection]) {
       item.dataset.tone = idea.id;
-      item.style.setProperty("--delay", `${index * 46}ms`);
+      item.style.setProperty("--order", index);
     }
     node.querySelector(".branch-marker").textContent = idea.icon;
     node.querySelector(".branch-category").textContent = idea.label;
     node.querySelector(".branch-title").textContent = idea.title;
     node.title = idea.title;
-    node.addEventListener("click", () => selectIdea(idea));
+    node.addEventListener("click", () => {
+      if (!cancelPromotion) selectIdea(idea);
+    });
     return { node, connection, idea };
   });
   branches.replaceChildren(...graph.map(({ node }) => node));
@@ -180,12 +295,16 @@ function render(focusTitle = false) {
   selectIdea(ideas.find((idea) => idea.id === current.selected) ?? ideas[0], false);
   notice.textContent = `「${current.label}」的第 ${current.batch + 1} 批，已生成 ${ideas.length} 条分支。`;
   if (focusTitle) {
+    workspace.classList.add("has-active-detail");
+    setDetailExpanded(false);
     title.focus({ preventScroll: true });
-    element("results").scrollIntoView({ block: "nearest" });
+    plot.scrollIntoView({ block: "nearest" });
+    keepGraphAboveDetail();
   }
 }
 
 function start(topic) {
+  enterExploration();
   path = [{ topic, label: topic, batch: 0 }];
   render(true);
 }
@@ -201,20 +320,29 @@ form.addEventListener("submit", (event) => {
   start(topic);
 });
 input.addEventListener("input", () => input.setCustomValidity(""));
-element("examples").addEventListener("click", (event) => {
+exampleTopics.addEventListener("click", (event) => {
   const example = event.target.closest("button[data-keyword]");
   if (!example) return;
   input.value = example.dataset.keyword;
   input.setCustomValidity("");
   start(input.value);
 });
-element("more").addEventListener("click", () => {
+more.addEventListener("click", () => {
   path.at(-1).batch += 1;
+  setDetailExpanded(false);
   render();
 });
+detailToggle.addEventListener("click", () => {
+  setDetailExpanded(!detail.classList.contains("is-expanded"));
+});
 detailSave.addEventListener("click", () => toggleSaved(ideaKey(activeIdea, path), activeIdea, path));
-element("explore-detail").addEventListener("click", () => explore(activeIdea, path));
+exploreButton.addEventListener("click", () => {
+  if (cancelPromotion) return;
+  const source = graph.find(({ idea }) => idea === activeIdea);
+  explore(activeIdea, path, source);
+});
 element("open-saved").addEventListener("click", () => {
+  cancelPromotion?.();
   renderSaved();
   dialog.showModal();
 });

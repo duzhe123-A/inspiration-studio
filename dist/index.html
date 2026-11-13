@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f8f7f4">
+  <meta name="theme-color" content="#f7f6fb">
   <meta name="description" content="输入任意关键词，在动态分支图上找灵感，沿着喜欢的想法继续发散。">
   <title>灵感发散器</title>
   <link rel="stylesheet" href="./style.css">
@@ -19,14 +19,16 @@
   </header>
 
   <main class="layout">
-    <section class="hero" aria-labelledby="title">
-      <h1 id="title">从一个词，<br>打开<span>更多可能。</span></h1>
+    <section class="hero" id="keyword-panel" aria-labelledby="title">
+      <h1 id="title">从一个词，<br>打开<span>更多可能</span>。</h1>
       <div>
-        <form id="idea-form" class="search">
-          <label class="sr-only" for="keyword">输入关键词或短语</label>
-          <input id="keyword" name="keyword" placeholder="输入任意关键词或短语" maxlength="100" required autocomplete="off" enterkeyhint="go">
-          <button class="primary" type="submit">开始发散 <span aria-hidden="true">↗</span></button>
-        </form>
+        <div class="search-controls" id="search-controls">
+          <form id="idea-form" class="search">
+            <label class="sr-only" for="keyword">输入关键词或短语</label>
+            <input id="keyword" name="keyword" placeholder="输入关键词或短语" maxlength="100" required autocomplete="off" enterkeyhint="go">
+            <button class="primary" type="submit">开始发散 <span aria-hidden="true">↗</span></button>
+          </form>
+        </div>
         <div class="examples" id="examples">
           <span>试试</span>
           <button type="button" data-keyword="咖啡">咖啡</button>
@@ -38,32 +40,35 @@
     </section>
 
     <section class="workspace" id="results" aria-label="灵感分支图">
-      <div class="workspace-toolbar">
-        <nav id="trail" class="trail" aria-label="发散路径" hidden></nav>
-        <p id="graph-hint" class="graph-hint">点选分支，查看并继续发散</p>
-        <button type="button" id="more" class="quiet-button more"><span aria-hidden="true">⟳</span> 换一批</button>
-      </div>
-
-      <div id="plot" class="plot" role="group" aria-labelledby="result-title">
-        <div id="connections" class="connections" aria-hidden="true"></div>
-        <div class="center">
-          <div class="center-copy">
-            <span class="center-mark" aria-hidden="true">✦</span>
-            <h2 id="result-title" tabindex="-1"></h2>
-          </div>
+      <div class="graph-card">
+        <div class="workspace-toolbar" id="workspace-toolbar">
+          <nav id="trail" class="trail" aria-label="发散路径" hidden></nav>
+          <p id="graph-hint" class="graph-hint">点选分支，查看灵感</p>
+          <button type="button" id="more" class="quiet-button more"><span aria-hidden="true">⟳</span> 换一批</button>
         </div>
-        <div id="branches" class="branches"></div>
+
+        <div id="plot" class="plot" role="group" aria-labelledby="result-title">
+          <div id="connections" class="connections" aria-hidden="true"></div>
+          <div class="center">
+            <div class="center-copy">
+              <span class="center-mark" aria-hidden="true">✦</span>
+              <h2 id="result-title" tabindex="-1"></h2>
+            </div>
+          </div>
+          <div id="branches" class="branches"></div>
+        </div>
       </div>
 
       <section class="idea-detail" id="idea-detail" aria-labelledby="detail-title">
-        <div class="detail-copy">
-          <div class="detail-heading">
-            <span class="detail-category" id="detail-category"></span>
-            <h3 id="detail-title"></h3>
-          </div>
-          <p id="detail-text"></p>
+        <div class="detail-heading">
+          <span class="detail-category" id="detail-category"></span>
+          <h3 id="detail-title"></h3>
         </div>
+        <p class="detail-text" id="detail-text"></p>
         <div class="detail-actions">
+          <button class="detail-toggle" id="detail-toggle" type="button" aria-controls="detail-text" aria-expanded="false">
+            <span id="detail-toggle-label">展开详情</span><span class="chevron" aria-hidden="true"></span>
+          </button>
           <button class="save" id="save-detail" type="button" aria-pressed="false"></button>
           <button class="primary explore" id="explore-detail" type="button">继续发散 <span aria-hidden="true">↗</span></button>
         </div>
