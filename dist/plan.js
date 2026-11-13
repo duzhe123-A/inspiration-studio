@@ -98,15 +98,26 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
   const content = document.getElementById("plan-content");
   const copyPlan = document.getElementById("copy-plan");
   const status = document.getElementById("plan-status");
+  const requestStatus = document.getElementById("plan-request-status");
+  const rulesButton = document.getElementById("generate-rules-plan");
 
+  const maximumSelection = 8;
   const chosen = new Map();
   let currentPlan;
+  let planRequest;
+  let availability;
 
   function updateCount() {
     badge.hidden = chosen.size === 0;
     badge.textContent = chosen.size;
     count.textContent = `已选 ${chosen.size} 条`;
-    generate.disabled = chosen.size < 2;
+    const busy = Boolean(planRequest);
+    generate.disabled = chosen.size < 2 || busy;
+    rulesButton.disabled = generate.disabled;
+    generate.textContent = busy ? "正在整合…" : availability === false ? "生成规则版" : "AI 生成方案";
+    for (const checkbox of options.querySelectorAll("input")) {
+      checkbox.disabled = busy || (chosen.size >= maximumSelection && !checkbox.checked);
+    }
   }
 
   function showPicker() {
@@ -141,6 +152,8 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
     picker.hidden = false;
     result.hidden = true;
     currentPlan = undefined;
+    requestStatus.hidden = true;
+    rulesButton.hidden = true;
   }
 
   opener.addEventListener("click", () => {
@@ -148,11 +161,17 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
     showPicker();
     planner.showModal();
     options.querySelector("input")?.focus();
+    fetch("/api/creative-plan", { cache: "no-store", signal: AbortSignal.timeout(5000) })
+      .then(response => response.json())
+      .then(data => {
+        availability = data.available;
+        updateCount();
+      })
+      .catch(() => {});
   });
 
-  generate.addEventListener("click", () => {
-    if (chosen.size < 2) return;
-    const plan = makeCreativePlan([...chosen.values()]);
+  function displayPlan(plan, mode) {
+    document.getElementById("plan-mode").textContent = mode;
     currentPlan = plan;
     document.getElementById("plan-name").textContent = plan.name;
     document.getElementById("plan-concept").textContent = plan.concept;
@@ -164,6 +183,15 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
       const detail = document.createElement("p");
       detail.textContent = step.detail;
       row.append(title, detail);
+      for (const [label, value] of [["所需", step.materials?.join("、")], ["产出", step.result]]) {
+        if (!value) continue;
+        const line = document.createElement("p");
+        line.className = "plan-step-meta";
+        const key = document.createElement("strong");
+        key.textContent = label;
+        line.append(key, document.createTextNode(value));
+        row.append(line);
+      }
       return row;
     }));
     copyPlan.textContent = "复制方案";
@@ -171,6 +199,68 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
     picker.hidden = true;
     result.hidden = false;
     content.focus();
+  }
+
+  generate.addEventListener("click", async () => {
+    if (chosen.size < 2 || planRequest) return;
+    if (availability === false) {
+      displayPlan(makeCreativePlan([...chosen.values()]), "规则生成");
+      return;
+    }
+    const controller = new AbortController();
+    planRequest = controller;
+    updateCount();
+    requestStatus.textContent = "正在融合选中的灵感并编排执行步骤。";
+    requestStatus.hidden = false;
+    rulesButton.hidden = true;
+    const timeout = setTimeout(() => controller.abort(), 42_000);
+
+    try {
+      const ideas = [...chosen.values()].map(({ idea, route }) => ({
+        title: idea.title.slice(0, 180),
+        detail: idea.detail.slice(0, 600),
+        path: [route[0], ...route.slice(1).slice(-4)].map(({ label }) => label.slice(0, 100)),
+      }));
+      const response = await fetch("/api/creative-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ideas }),
+        signal: controller.signal,
+      });
+      const data = await response.json();
+      if (planRequest !== controller || !planner.open) return;
+      if (response.ok && data.plan) {
+        displayPlan(data.plan, "AI 生成");
+      } else {
+        requestStatus.textContent = data.error === "unconfigured"
+          ? "AI 生成尚未启用。你可以先生成规则版。"
+          : data.error === "quota"
+            ? "今天的 AI 生成次数已用完。你可以先生成规则版。"
+            : "这次没能生成 AI 方案。可以重试，或生成规则版。";
+        rulesButton.hidden = false;
+      }
+    } catch {
+      if (planRequest === controller && planner.open) {
+        requestStatus.textContent = "暂时连不上 AI。可以重试，或生成规则版。";
+        rulesButton.hidden = false;
+      }
+    } finally {
+      clearTimeout(timeout);
+      if (planRequest === controller) {
+        planRequest = undefined;
+        updateCount();
+      }
+    }
+  });
+
+  planner.addEventListener("close", () => {
+    if (planner.open) return;
+    planRequest?.abort();
+    planRequest = undefined;
+  });
+
+  rulesButton.addEventListener("click", () => {
+    if (chosen.size >= 2 && !planRequest) displayPlan(makeCreativePlan([...chosen.values()]), "规则生成");
   });
 
   document.getElementById("edit-plan").addEventListener("click", () => {
@@ -181,9 +271,11 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
   copyPlan.addEventListener("click", async () => {
     const plan = currentPlan;
     if (!plan) return;
-    const steps = plan.steps.map(({ title, detail }, index) =>
-      `${index + 1}. ${title}\n${detail}`
-    ).join("\n\n");
+    const steps = plan.steps.map(({ title, detail, materials, result }, index) => [
+      `${index + 1}. ${title}`, detail,
+      materials?.length ? `所需材料：${materials.join("、")}` : "",
+      result ? `阶段成果：${result}` : "",
+    ].filter(Boolean).join("\n")).join("\n\n");
     const text = [plan.name, `核心想法\n${plan.concept}`, `具体执行步骤\n${steps}`, `最终成果\n${plan.deliverable}`].join("\n\n");
     const isCurrent = () => planner.open && currentPlan === plan;
     if (await copy(text, "复制方案", isCurrent) && isCurrent()) {

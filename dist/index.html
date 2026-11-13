@@ -109,18 +109,21 @@
       <form method="dialog"><button type="submit" class="close" aria-label="关闭创意方案">×</button></form>
     </div>
     <div id="plan-picker">
-      <p class="plan-hint">至少选择两条灵感。切换分支后可以接着选。</p>
+      <p class="plan-hint">选择 2–8 条灵感。切换分支后可以接着选。AI 会读取所选灵感及其路径。</p>
       <fieldset class="plan-choices">
         <legend class="sr-only">选择要整合的灵感</legend>
         <div id="plan-options"></div>
       </fieldset>
+      <p id="plan-request-status" class="plan-hint plan-request-status" role="status" hidden></p>
       <div class="plan-actions">
         <span id="plan-count" role="status"></span>
-        <button id="generate-plan" class="primary" type="button" disabled>生成方案</button>
+        <button id="generate-rules-plan" class="quiet-button" type="button" hidden>生成规则版</button>
+        <button id="generate-plan" class="primary" type="button" disabled>AI 生成方案</button>
       </div>
     </div>
     <div id="plan-result" hidden>
       <article id="plan-content" class="plan-content" tabindex="-1">
+        <p id="plan-mode" class="plan-mode"></p>
         <h3 id="plan-name"></h3>
         <section>
           <h4>核心想法</h4>

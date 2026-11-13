@@ -653,3 +653,9 @@ dialog::backdrop { background: #1f0f3766; }
   .graph-actions .quiet-button { padding-inline: 6px; font-size: 12px; }
   .plan-dialog { padding: 13px; }
 }
+
+.plan-actions { flex-wrap: wrap; }
+#plan-count { margin-right: auto; }
+.plan-request-status { margin: 10px 0 0; }
+.plan-content .plan-mode { margin: 0 0 4px; font-size: 12px; font-weight: 750; color: var(--purple); }
+.plan-step-meta strong { margin-right: .5em; color: #4a3768; }
