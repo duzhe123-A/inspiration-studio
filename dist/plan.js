@@ -86,7 +86,7 @@ function makeCreativePlan(entries) {
   return { name, concept, steps, deliverable: format.output };
 }
 
-function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
+function setupIdeaPlanner({ getCandidates, copy, onSelectionChange, onLimit }) {
   const planner = document.getElementById("plan-dialog");
   const opener = document.getElementById("open-plan");
   const badge = document.getElementById("plan-badge");
@@ -120,10 +120,23 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
     }
   }
 
+  const keyFor = entry => mapKey([...entry.route, { label: entry.idea.title, idea: entry.idea }]);
+
+  function setChosen(key, entry, checked) {
+    if (checked && !chosen.has(key) && chosen.size >= maximumSelection) {
+      onLimit();
+      return;
+    }
+    if (checked) chosen.set(key, entry);
+    else chosen.delete(key);
+    updateCount();
+    onSelectionChange(chosen);
+  }
+
   function showPicker() {
     const candidates = new Map(chosen);
     for (const entry of getCandidates()) {
-      candidates.set(mapKey([...entry.route, { label: entry.idea.title, idea: entry.idea }]), entry);
+      candidates.set(keyFor(entry), entry);
     }
 
     const rows = Array.from(candidates, ([key, entry]) => {
@@ -139,11 +152,7 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
       const description = document.createElement("span");
       description.append(name, trail);
       label.append(checkbox, description);
-      checkbox.addEventListener("change", () => {
-        if (checkbox.checked) chosen.set(key, entry);
-        else chosen.delete(key);
-        updateCount();
-      });
+      checkbox.addEventListener("change", () => setChosen(key, entry, checkbox.checked));
       return label;
     });
 
@@ -157,10 +166,9 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
   }
 
   opener.addEventListener("click", () => {
-    beforeOpen();
     showPicker();
     planner.showModal();
-    options.querySelector("input")?.focus();
+    (chosen.size >= 2 ? generate : options.querySelector("input"))?.focus();
     fetch("/api/creative-plan", { cache: "no-store", signal: AbortSignal.timeout(5000) })
       .then(response => response.json())
       .then(data => {
@@ -283,4 +291,11 @@ function setupIdeaPlanner({ getCandidates, beforeOpen, copy }) {
       status.textContent = "已复制完整创意方案";
     }
   });
+
+  return {
+    toggle(entry) {
+      const key = keyFor(entry);
+      setChosen(key, entry, !chosen.has(key));
+    },
+  };
 }

@@ -10,6 +10,14 @@ const categories = [
 ];
 
 const examples = new Map([
+  ["超级个体", [
+    ["个人品牌", "选出你能反复解决的一个问题，把一次真实的解决过程写成三段：客户的困境、你的做法、可验证的结果。"],
+    ["内容资产", "从最近一周的工作笔记里找一个经常重用的过程，把它整理成一张可以收藏和分享的清单。"],
+    ["产品实验", "用一页纸画出最小版本，只解决一个人的一个痛点，再用半小时做出能拿给对方看的草稿。"],
+    ["合作网络", "找一位技能互补的创作者，用对方现成的素材和你的一项工具，试做一份可以共同发布的作品。"],
+    ["可复用流程", "记录一件每周要做两次的事，标出重复的三步，做成一份可以交给别人使用的模板。"],
+    ["价值验证", "拿同一份小样给三位潜在用户，分别问愿不愿意再用一次、什么时候用、愿意付出什么。"],
+  ]],
   ["咖啡", [
     ["雨声里的烘豆香", "用雨落在窗台的声音，搭配磨豆和萃取的近景，让观众先听见一杯咖啡。"],
     ["第一班地铁前的咖啡站", "给赶早班的人做一份两分钟菜单。思考动线、杯盖，以及能一眼看懂的点单方式。"],
@@ -92,7 +100,7 @@ function makeIdeas(path, batch) {
   const topic = path.at(-1).topic;
   const curated = examples.get(topic);
   if (curated && batch === 0) {
-    return curated.map(([title, detail], index) => ({ ...categories[index], title, detail }));
+    return curated.map(([title, detail], index) => ({ ...categories[index], ...(topic === "超级个体" ? { label: "探索方向" } : {}), title, detail }));
   }
 
   const cues = matchedCues(topic) ?? commonCues;
