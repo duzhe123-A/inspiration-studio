@@ -29,7 +29,7 @@
         <span>灵感发散器 <small>INSPIRATION STUDIO</small></span>
       </a>
       <div class="topbar-actions">
-        <button class="quiet-button saved-button" type="button" id="restart">重新开始</button>
+        <button class="quiet-button saved-button" type="button" id="restart" aria-haspopup="dialog">重新开始</button>
         <button class="quiet-button saved-button" type="button" id="open-saved"><span aria-hidden="true">☆</span> 已收藏 <span id="saved-count" class="count" hidden></span></button>
       </div>
     </header>
@@ -70,6 +70,17 @@
 
     <p id="notice" class="sr-only" role="status"></p>
   </main>
+
+  <dialog id="restart-dialog" aria-labelledby="restart-title" aria-describedby="restart-description">
+    <div class="dialog-heading">
+      <h2 id="restart-title">要重新开始吗？</h2>
+    </div>
+    <p id="restart-description">当前画布、待整合的灵感和未提交的文字会被清空。已收藏的灵感会保留。</p>
+    <form method="dialog" class="detail-actions">
+      <button class="quiet-button" type="submit" value="cancel" autofocus>取消</button>
+      <button class="primary" type="submit" value="clear">确认清空</button>
+    </form>
+  </dialog>
 
   <dialog id="idea-detail" aria-labelledby="detail-title">
     <div class="dialog-heading">

@@ -122,6 +122,8 @@ dialog::backdrop { background: #2823134f; }
 .detail-path { margin: 0 0 9px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
 .detail-text { margin: 0 0 17px; line-height: 1.65; overflow-wrap: anywhere; }
 .detail-actions { justify-content: flex-end; flex-wrap: wrap; }
+#restart-dialog { max-width: 380px; }
+#restart-description { margin: 0 0 17px; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .save { min-height: 32px; border: 1px solid var(--line); border-radius: 9px; padding: 4px 9px; background: #fff8de; font-size: 16px; }
 .saved-list { list-style: none; margin: 0; padding: 0; }
 .saved-item { padding: 12px 0; border-top: 1px solid var(--line); }

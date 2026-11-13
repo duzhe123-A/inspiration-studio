@@ -534,7 +534,14 @@ element("pick-active").addEventListener("click", () => {
   if (active.idea) planner.toggle(asEntry(active));
 });
 
-element("restart").addEventListener("click", () => {
+const restartDialog = element("restart-dialog");
+element("restart").addEventListener("click", () => restartDialog.showModal());
+
+restartDialog.addEventListener("submit", event => {
+  event.preventDefault();
+  restartDialog.close();
+  if (event.submitter?.value !== "clear") return;
+
   clearGraph();
   planner.clearSelection();
   attach.setAttribute("aria-pressed", "false");
