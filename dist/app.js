@@ -24,6 +24,11 @@ const detailText = element("detail-text");
 const detailToggle = element("detail-toggle");
 const detailToggleLabel = element("detail-toggle-label");
 const detailSave = element("save-detail");
+const copyButton = element("copy-idea");
+const copyDialog = element("copy-dialog");
+const copyText = element("copy-text");
+const mapDialog = element("map-dialog");
+const mapTree = element("map-tree");
 const exploreButton = element("explore-detail");
 const notice = element("notice");
 const dialog = element("saved-dialog");
@@ -33,9 +38,11 @@ const savedCount = element("saved-count");
 const storageKey = "inspiration-studio-saved-v1";
 
 let path = [{ topic: "咖啡", label: "咖啡", batch: 0 }];
+const explored = new Map();
 let activeIdea;
 let graph = [];
 let cancelPromotion;
+let copyFeedback;
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const mobileLayout = matchMedia("(max-width: 600px)");
 const saved = readSaved();
@@ -90,6 +97,55 @@ function enterExploration() {
   element("search-controls").append(more);
 }
 
+function mapKey(route) {
+  return JSON.stringify(route.map(({ label, idea }) => [label, idea?.id, idea?.detail]));
+}
+
+function rememberPath() {
+  for (let length = 1; length <= path.length; length += 1) {
+    const route = path.slice(0, length);
+    explored.set(mapKey(route), route);
+  }
+}
+
+function showMap() {
+  cancelPromotion?.();
+  rememberPath();
+
+  const rows = new Map();
+  const root = document.createDocumentFragment();
+  const current = mapKey(path);
+  for (const [key, route] of explored) {
+    if (route[0].label !== path[0].label) continue;
+
+    const row = document.createElement("li");
+    const button = document.createElement("button");
+    const name = route.at(-1).label;
+    button.type = "button";
+    button.className = "map-node";
+    button.textContent = name;
+    button.title = name;
+    if (key === current) button.setAttribute("aria-current", "location");
+    button.addEventListener("click", () => {
+      mapDialog.close();
+      path = route;
+      render(true);
+    });
+
+    const children = document.createElement("ul");
+    row.append(button, children);
+    rows.set(key, children);
+    const parent = rows.get(mapKey(route.slice(0, -1))) ?? root;
+    parent.append(row);
+  }
+
+  mapTree.replaceChildren(root);
+  mapDialog.showModal();
+  const selected = mapTree.querySelector("[aria-current]");
+  selected?.focus({ preventScroll: true });
+  selected?.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
 function setDetailExpanded(expanded) {
   detail.classList.toggle("is-expanded", expanded);
   detailToggle.setAttribute("aria-expanded", String(expanded));
@@ -103,7 +159,7 @@ function keepGraphAboveDetail() {
 }
 
 function explore(idea, route, source) {
-  const nextPath = [...route, { topic: idea.title, label: idea.title, batch: 0 }];
+  const nextPath = [...route, { topic: idea.title, label: idea.title, idea, batch: 0 }];
   const showNextLayer = () => {
     enterExploration();
     path = nextPath;
@@ -202,6 +258,8 @@ function renderSaved() {
 
 function selectIdea(idea, announce = true) {
   activeIdea = idea;
+  clearTimeout(copyFeedback);
+  copyButton.textContent = "复制灵感";
   path.at(-1).selected = idea.id;
   for (const { node, connection, idea: item } of graph) {
     const selected = item === idea;
@@ -221,6 +279,32 @@ function selectIdea(idea, announce = true) {
   }
 }
 
+async function copyIdea() {
+  const idea = activeIdea;
+  const route = path;
+  const labels = [...route.map(({ label }) => label), idea.title];
+  const text = [idea.title, idea.detail, `发散路径：${labels.join(" → ")}`].join("\n\n");
+
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    if (idea !== activeIdea || route !== path) return;
+    copyText.value = text;
+    if (!copyDialog.open) copyDialog.showModal();
+    copyText.focus();
+    copyText.select();
+    return;
+  }
+
+  notice.textContent = `已复制「${idea.title}」`;
+  if (idea !== activeIdea || route !== path) return;
+  clearTimeout(copyFeedback);
+  copyButton.textContent = "已复制";
+  copyFeedback = setTimeout(() => {
+    copyButton.textContent = "复制灵感";
+  }, 1800);
+}
+
 function positionConnections() {
   const centerX = plot.clientWidth / 2;
   const centerY = plot.clientHeight / 2;
@@ -237,7 +321,7 @@ function positionConnections() {
 function renderTrail() {
   trail.hidden = path.length === 1;
   hint.hidden = !trail.hidden || keywordPanel.classList.contains("is-compact");
-  workspaceToolbar.hidden = trail.hidden && hint.hidden;
+  workspaceToolbar.classList.toggle("is-compact", hint.hidden && trail.hidden);
   trail.replaceChildren();
   for (const [index, step] of path.slice(0, -1).entries()) {
     const button = document.createElement("button");
@@ -284,15 +368,20 @@ function render(focusTitle = false, enteringBranch = false) {
     node.querySelector(".branch-category").textContent = idea.label;
     node.querySelector(".branch-title").textContent = idea.title;
     node.title = idea.title;
+    const branch = { node, connection, idea };
     node.addEventListener("click", () => {
       if (!cancelPromotion) selectIdea(idea);
     });
-    return { node, connection, idea };
+    node.addEventListener("dblclick", () => {
+      if (!cancelPromotion) explore(idea, path, branch);
+    });
+    return branch;
   });
   branches.replaceChildren(...graph.map(({ node }) => node));
   connections.replaceChildren(...graph.map(({ connection }) => connection));
   positionConnections();
   selectIdea(ideas.find((idea) => idea.id === current.selected) ?? ideas[0], false);
+  rememberPath();
   notice.textContent = `「${current.label}」的第 ${current.batch + 1} 批，已生成 ${ideas.length} 条分支。`;
   if (focusTitle) {
     workspace.classList.add("has-active-detail");
@@ -335,6 +424,8 @@ more.addEventListener("click", () => {
 detailToggle.addEventListener("click", () => {
   setDetailExpanded(!detail.classList.contains("is-expanded"));
 });
+copyButton.addEventListener("click", copyIdea);
+element("open-map").addEventListener("click", showMap);
 detailSave.addEventListener("click", () => toggleSaved(ideaKey(activeIdea, path), activeIdea, path));
 exploreButton.addEventListener("click", () => {
   if (cancelPromotion) return;

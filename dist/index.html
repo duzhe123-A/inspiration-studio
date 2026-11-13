@@ -8,6 +8,7 @@
   <title>灵感发散器</title>
   <link rel="stylesheet" href="./style.css">
   <script defer src="./ideas.js"></script>
+  <script defer src="./followups.js"></script>
   <script defer src="./app.js"></script>
 </head>
 <body>
@@ -43,8 +44,11 @@
       <div class="graph-card">
         <div class="workspace-toolbar" id="workspace-toolbar">
           <nav id="trail" class="trail" aria-label="发散路径" hidden></nav>
-          <p id="graph-hint" class="graph-hint">点选分支，查看灵感</p>
-          <button type="button" id="more" class="quiet-button more"><span aria-hidden="true">⟳</span> 换一批</button>
+          <p id="graph-hint" class="graph-hint">点选分支查看灵感</p>
+          <div class="graph-actions">
+            <button type="button" id="open-map" class="quiet-button">全图</button>
+            <button type="button" id="more" class="quiet-button more"><span aria-hidden="true">⟳</span> 换一批</button>
+          </div>
         </div>
 
         <div id="plot" class="plot" role="group" aria-labelledby="result-title">
@@ -69,6 +73,7 @@
           <button class="detail-toggle" id="detail-toggle" type="button" aria-controls="detail-text" aria-expanded="false">
             <span id="detail-toggle-label">展开详情</span><span class="chevron" aria-hidden="true"></span>
           </button>
+          <button class="quiet-button copy-idea" id="copy-idea" type="button">复制灵感</button>
           <button class="save" id="save-detail" type="button" aria-pressed="false"></button>
           <button class="primary explore" id="explore-detail" type="button">继续发散 <span aria-hidden="true">↗</span></button>
         </div>
@@ -84,6 +89,25 @@
     </div>
     <p id="saved-empty" class="saved-empty" hidden>点选分支后，点击详情旁的星星即可收藏。</p>
     <ul id="saved-list" class="saved-list"></ul>
+  </dialog>
+
+  <dialog id="map-dialog" class="map-dialog" aria-labelledby="map-title">
+    <div class="dialog-heading">
+      <h2 id="map-title">灵感全图</h2>
+      <form method="dialog"><button type="submit" class="close" aria-label="关闭全图">×</button></form>
+    </div>
+    <div class="map-scroll">
+      <ul id="map-tree" class="map-tree" aria-label="已展开的灵感路径"></ul>
+    </div>
+  </dialog>
+
+  <dialog id="copy-dialog" aria-labelledby="copy-title">
+    <div class="dialog-heading">
+      <h2 id="copy-title">复制灵感</h2>
+      <form method="dialog"><button type="submit" class="close" aria-label="关闭复制">×</button></form>
+    </div>
+    <p class="copy-instructions">请复制下方已选中的文字。</p>
+    <textarea id="copy-text" aria-label="灵感内容" readonly rows="7"></textarea>
   </dialog>
 
   <template id="branch-template">

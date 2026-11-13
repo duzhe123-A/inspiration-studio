@@ -87,18 +87,18 @@ function titleText(value, length = 27) {
 }
 
 function makeIdeas(path, batch) {
+  if (path.length > 1) return makeFollowups(path, batch);
+
   const topic = path.at(-1).topic;
-  const curated = path.length === 1 && examples.get(topic);
+  const curated = examples.get(topic);
   if (curated && batch === 0) {
     return curated.map(([title, detail], index) => ({ ...categories[index], title, detail }));
   }
 
-  const parent = path.at(-2)?.topic;
-  const cues = matchedCues(topic) ?? (parent && matchedCues(parent)) ?? matchedCues(path[0].topic) ?? commonCues;
+  const cues = matchedCues(topic) ?? commonCues;
   const [first, second, context, object, prototype, tradeoff] = cues;
   const short = titleText(topic);
   const quote = `「${short}」`;
-  const around = parent && parent !== topic ? `把「${titleText(parent)}」作为背景，` : "";
   const seed = Array.from(topic).reduce((total, char) => (Math.imul(total, 31) + char.codePointAt(0)) >>> 0, 0);
   const round = curated ? batch - 1 : batch;
   const pick = (choices, salt) => choices[(seed + salt + Math.floor(round / 5)) % choices.length];
@@ -111,7 +111,7 @@ function makeIdeas(path, batch) {
   const prompts = [
     [
       [`${short}的第一印象`, `从「${first}」入手，描述你接触${quote}的第一秒。试着记录一个会被旁人错过的细节。`],
-      [`闭上眼睛感受${quote}`, `${around}只用声音、触感或气味描述它。以「${second}」为起点，看看什么特征还能被认出来。`],
+      [`闭上眼睛感受${quote}`, `只用声音、触感或气味描述它。以「${second}」为起点，看看什么特征还能被认出来。`],
       [`${short}的三格感官记录`, `分别记录接触${quote}之前、当下、之后的感受。重点留意「${first}」怎样变化。`],
       [`给${quote}配一段声音`, `用三种身边能找到的声音表现${quote}。把其中一种留给「${second}」，录下十秒试听。`],
       [`放大${quote}的一个细节`, `用「${object}」表现${quote}。把它放大到占满画面，观察原本藏起来的形状或纹理。`],
@@ -124,7 +124,7 @@ function makeIdeas(path, batch) {
       [`${short}的一天`, `把${quote}分别放进清晨、午后和夜晚。选出最能改变原本习惯的那一刻，写出具体发生的事。`],
     ],
     [
-      [`由${person}来讲`, `${around}用${person}的口吻讲一次与${quote}的相遇。把「${object}」写成能推动故事的小线索。`],
+      [`由${person}来讲`, `用${person}的口吻讲一次与${quote}的相遇。把「${object}」写成能推动故事的小线索。`],
       [`一件小物品留下的线索`, `让「${object}」成为故事的第一幕。读者要到结尾才知道它与${quote}的关系。`],
       [`一年以后回看${quote}`, `写一封来自一年后的信。信里留一条当时没注意到的细节，以及一个现在才回答得出的问题。`],
       [`同一件事，两种讲法`, `请${person}和一名旁观者讲述同一次与${quote}有关的经历，让他们对「${tradeoff}」有不同判断。`],
