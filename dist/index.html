@@ -21,7 +21,10 @@
       </div>
     </div>
 
-    <p id="empty-graph" class="empty-graph" hidden>输入关键词，开始一张新的灵感图。</p>
+    <div id="empty-graph" class="empty-graph" hidden>
+      <p>输入关键词，开始一张新的灵感图。</p>
+      <button class="primary" type="button" id="undo-clear" hidden>撤销清空</button>
+    </div>
 
     <header class="topbar">
       <a class="brand" href="./" aria-label="灵感发散器首页">
@@ -66,6 +69,13 @@
         <input id="keyword" name="keyword" placeholder="输入任意关键词，开始发散…" maxlength="100" required autocomplete="off" enterkeyhint="go">
         <button class="composer-submit" type="submit" aria-label="开始发散" title="开始发散">↑</button>
       </form>
+      <div class="keyword-suggestions" id="keyword-suggestions" role="group" aria-label="灵感提示词">
+        <span aria-hidden="true">试试</span>
+        <button type="button">咖啡</button>
+        <button type="button">城市漫游</button>
+        <button type="button">旧照片修复</button>
+        <button type="button">太空旅行</button>
+      </div>
     </div>
 
     <p id="notice" class="sr-only" role="status"></p>
@@ -75,7 +85,7 @@
     <div class="dialog-heading">
       <h2 id="restart-title">要重新开始吗？</h2>
     </div>
-    <p id="restart-description">当前画布、待整合的灵感和未提交的文字会被清空。已收藏的灵感会保留。</p>
+    <p id="restart-description">当前画布、待整合的灵感和未提交的文字会被清空。开始新图前可以撤销。已收藏的灵感会保留。</p>
     <form method="dialog" class="detail-actions">
       <button class="quiet-button" type="submit" value="cancel" autofocus>取消</button>
       <button class="primary" type="submit" value="clear">确认清空</button>

@@ -293,8 +293,9 @@ function setupIdeaPlanner({ getCandidates, copy, onSelectionChange, onLimit }) {
   });
 
   return {
-    clearSelection() {
+    replaceSelection(entries) {
       chosen.clear();
+      for (const [key, entry] of entries) chosen.set(key, entry);
       currentPlan = undefined;
       updateCount();
       onSelectionChange(chosen);

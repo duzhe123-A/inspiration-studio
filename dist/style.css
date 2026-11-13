@@ -6,6 +6,7 @@
   --line: #e9e7e1;
   --yellow: #ffda4b;
   --shadow: 0 4px 20px #3028130b, 0 1px 4px #30281308;
+  --suggestions-height: 34px;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   color: var(--ink);
   background: var(--canvas);
@@ -55,6 +56,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .topbar > * { pointer-events: auto; }
 .topbar-actions { display: flex; gap: 6px; }
 .empty-graph { position: absolute; inset: 50% 12px auto; margin: 0; transform: translateY(-50%); color: var(--muted); text-align: center; font-size: 14px; pointer-events: none; }
+.empty-graph p { margin: 0; }
+.empty-graph button { margin-top: 12px; color: var(--ink); pointer-events: auto; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; font-size: 16px; line-height: 1.15; font-weight: 800; }
 .brand-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--yellow); font-size: 22px; line-height: 1; }
 .brand small { display: block; margin-top: 3px; font-size: 8px; letter-spacing: .12em; color: var(--muted); font-weight: 700; }
@@ -111,6 +114,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .composer-attach:hover, .composer-attach[aria-pressed="true"] { background: #ffec9e; }
 .composer-submit { background: #27251d; color: #fff; }
 .composer-submit:hover { background: #4a442f; }
+.keyword-suggestions { display: flex; align-items: center; justify-content: center; gap: 6px; height: var(--suggestions-height); padding-top: 6px; white-space: nowrap; }
+.keyword-suggestions span { color: var(--muted); font-size: 11px; }
+.keyword-suggestions button { min-height: 28px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 14px; background: #fff; font-size: 12px; }
+.keyword-suggestions button:hover { border-color: #e5c84d; background: #fff5cd; }
 
 dialog { width: min(calc(100% - 24px), 540px); max-height: min(86dvh, 720px); padding: 20px; border: 1px solid var(--line); border-radius: 19px; color: inherit; background: #fff; box-shadow: 0 16px 80px #28231338; }
 dialog::backdrop { background: #2823134f; }
@@ -180,14 +187,19 @@ dialog::backdrop { background: #2823134f; }
   .tray p { font-size: 10px; margin: 4px 0 5px; }
   .tray-picks { max-height: 56px; padding: 5px 0; }
   .tray-button { min-height: 28px; font-size: 11px; }
-  .graph-tools { top: auto; bottom: calc(73px + env(safe-area-inset-bottom)); left: 12px; transform: none; gap: 4px; }
+  .graph-tools { top: auto; bottom: calc(73px + var(--suggestions-height) + env(safe-area-inset-bottom)); left: 12px; transform: none; gap: 4px; }
   .graph-tool { min-height: 33px; padding: 5px 7px; font-size: 11px; }
   .composer-dock { width: calc(100% - 24px); bottom: calc(12px + env(safe-area-inset-bottom)); }
-  .zoom-controls { right: 12px; bottom: calc(73px + env(safe-area-inset-bottom)); padding: 1px; }
+  .zoom-controls { right: 12px; bottom: calc(73px + var(--suggestions-height) + env(safe-area-inset-bottom)); padding: 1px; }
   .zoom-controls button { min-width: 27px; height: 30px; }
   #zoom-level { display: none; }
   #fit-view { padding-inline: 5px; }
   #fit-view span { display: none; }
+  .toast { bottom: calc(121px + var(--suggestions-height) + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 360px) {
+  .keyword-suggestions { gap: 5px; }
+  .keyword-suggestions button { padding-inline: 7px; font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }

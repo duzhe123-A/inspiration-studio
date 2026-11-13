@@ -13,6 +13,7 @@ const copyDialog = element("copy-dialog");
 const copyText = element("copy-text");
 const notice = element("notice");
 const tray = element("tray-picks");
+const undoClear = element("undo-clear");
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const storageKey = "inspiration-studio-saved-v1";
 const saved = readSaved();
@@ -22,6 +23,7 @@ const camera = { x: 0, y: 0, scale: 1 };
 let active, root, cameraFrame, gesture, draggedUntil = 0;
 let autoFit = true;
 let picked = new Map();
+let clearedSession;
 let toastTimer, detailCopyTimer;
 
 function mapKey(route) {
@@ -77,7 +79,7 @@ function viewArea() {
   const height = plot.clientHeight;
   const mobile = width <= 690;
   const top = mobile ? Math.min(140, height * .27) : 78;
-  const bottom = mobile ? Math.min(112, height * .25) : 90;
+  const bottom = mobile ? Math.min(146, height * .3) : 124;
   return { width: width - 24, height: Math.max(1, height - top - bottom), x: width / 2, y: (height + top - bottom) / 2 };
 }
 
@@ -257,6 +259,8 @@ function clearGraph() {
 
 function start(topic, animate = true) {
   clearGraph();
+  clearedSession = undefined;
+  undoClear.hidden = true;
   root = addNode(null, { topic, label: topic }, { x: 0, y: 0 });
   markExpanded(root, animate);
   showActive(root);
@@ -280,6 +284,13 @@ attach.addEventListener("click", () => {
   attach.setAttribute("aria-pressed", String(attach.getAttribute("aria-pressed") !== "true"));
   updateComposer();
   input.focus();
+});
+
+element("keyword-suggestions").addEventListener("click", event => {
+  const button = event.target.closest("button");
+  if (!button) return;
+  input.value = button.textContent;
+  input.focus({ preventScroll: true });
 });
 
 element("idea-form").addEventListener("submit", event => {
@@ -542,16 +553,68 @@ restartDialog.addEventListener("submit", event => {
   restartDialog.close();
   if (event.submitter?.value !== "clear") return;
 
+  if (root) {
+    clearedSession = {
+      root,
+      active,
+      nodes: new Map(nodes),
+      links: [...connections.children],
+      picked: new Map(picked),
+      camera: { ...camera },
+      size: { ...oldSize },
+      autoFit,
+      draft: input.value,
+      attachMode: attach.getAttribute("aria-pressed"),
+    };
+  }
   clearGraph();
-  planner.clearSelection();
+  planner.replaceSelection([]);
   attach.setAttribute("aria-pressed", "false");
   input.value = "";
   const { x, y } = viewArea();
   autoFit = true;
   moveCamera({ x, y, scale: 1 }, false);
   showActive(undefined);
+  undoClear.hidden = !clearedSession;
   input.focus({ preventScroll: true });
   announce("画布已清空，可以输入新关键词");
+});
+
+undoClear.addEventListener("click", () => {
+  if (!clearedSession) return;
+  const previous = clearedSession;
+  clearedSession = undefined;
+  undoClear.hidden = true;
+  root = previous.root;
+  for (const [key, node] of previous.nodes) {
+    nodes.set(key, node);
+    node.el.classList.remove("new");
+    branches.append(node.el);
+  }
+  for (const link of previous.links) {
+    link.classList.remove("new");
+    connections.append(link);
+  }
+  planner.replaceSelection(previous.picked);
+  if (!input.value) {
+    input.value = previous.draft;
+    attach.setAttribute("aria-pressed", previous.attachMode);
+  }
+  showActive(previous.active);
+  autoFit = previous.autoFit;
+  const widthChange = oldSize.width - previous.size.width;
+  const heightChange = oldSize.height - previous.size.height;
+  if (autoFit && (widthChange || heightChange)) {
+    fit(undefined, false);
+  } else {
+    moveCamera({
+      x: previous.camera.x + widthChange / 2,
+      y: previous.camera.y + heightChange / 2,
+      scale: previous.camera.scale,
+    }, false);
+  }
+  element("restart").focus({ preventScroll: true });
+  announce("已恢复画布和待整合的灵感");
 });
 
 updateSavedCount();
